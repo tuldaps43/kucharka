@@ -1,0 +1,86 @@
+{
+  "slug": "pernik-podle-jana-puncochare",
+  "nazev": "Perník podle Jana Punčocháře",
+  "cas": "40 minut",
+  "porce": "1 plech",
+  "obtiznost": "snadná",
+  "foto": "",
+  "ingredience": [
+    {
+      "mnozstvi": "3",
+      "jednotka": "ks",
+      "nazev": "vejce"
+    },
+    {
+      "mnozstvi": "180",
+      "jednotka": "g",
+      "nazev": "třtinový cukr"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "ks",
+      "nazev": "špetka soli"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžička",
+      "nazev": "jedlá soda"
+    },
+    {
+      "mnozstvi": "40",
+      "jednotka": "g",
+      "nazev": "kakao"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "ks",
+      "nazev": "prášek do perníku"
+    },
+    {
+      "mnozstvi": "250",
+      "jednotka": "ml",
+      "nazev": "mléko"
+    },
+    {
+      "mnozstvi": "120",
+      "jednotka": "g",
+      "nazev": "přepuštěné máslo nebo olej"
+    },
+    {
+      "mnozstvi": "350",
+      "jednotka": "g",
+      "nazev": "hladká mouka"
+    }
+  ],
+  "postup": [
+    {
+      "text": "Vejce, cukr a špetku soli vyšlehat do hladké pěny",
+      "casovac_min": null
+    },
+    {
+      "text": "Přidat lžičku jedlé sody, kakao, prášek do perníku, mléko a máslo a lehce spojit",
+      "casovac_min": null
+    },
+    {
+      "text": "Vmíchat hladkou mouku aby vzniklo hladké těsto",
+      "casovac_min": null
+    },
+    {
+      "text": "Můžou se přidat pecičky čokolády",
+      "casovac_min": null
+    },
+    {
+      "text": "Vylít do vymazaného pekáče",
+      "casovac_min": null
+    },
+    {
+      "text": "Přidat lžičkami marmeládu",
+      "casovac_min": null
+    },
+    {
+      "text": "Péct 30 minut na 180 °C horní a spodní ohřev",
+      "casovac_min": null
+    }
+  ],
+  "tip": ""
+}

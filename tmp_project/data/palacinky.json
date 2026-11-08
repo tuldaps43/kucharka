@@ -1,0 +1,31 @@
+{
+  "slug": "palacinky",
+  "nazev": "Palačinky",
+  "cas": "20 min",
+  "porce": "4",
+  "obtiznost": "snadná",
+  "foto": "palacinky.jpg",
+  "ingredience": [
+    {
+      "mnozstvi": "250",
+      "jednotka": "g",
+      "nazev": "hladké mouky"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "olej na smažení"
+    }
+  ],
+  "postup": [
+    {
+      "text": "Mouku, cukr a sůl smíchejte v míse.",
+      "casovac_min": null
+    },
+    {
+      "text": "Těsto nechte odpočinout.",
+      "casovac_min": 10
+    }
+  ],
+  "tip": "Volitelná poznámka."
+}
