@@ -6,7 +6,9 @@ import json
 import os
 import re
 import shutil
+import sys
 import tempfile
+import traceback
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -166,6 +168,11 @@ def generate_slug(nazev: str) -> str:
     return text or "recept"
 
 
+def log_exception(context: str, exc: Exception) -> None:
+    print(f"[ERROR] {context}: {exc}", file=sys.stderr)
+    traceback.print_exc()
+
+
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -179,7 +186,8 @@ def write_json_atomic(path: Path, payload: Any) -> None:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
         os.replace(tmp_path, path)
-    except Exception:
+    except Exception as exc:
+        log_exception(f"write_json_atomic ({path})", exc)
         try:
             os.unlink(tmp_path)
         except OSError:
@@ -194,7 +202,8 @@ def write_text_atomic(path: Path, text: str) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(text)
         os.replace(tmp_path, path)
-    except Exception:
+    except Exception as exc:
+        log_exception(f"write_text_atomic ({path})", exc)
         try:
             os.unlink(tmp_path)
         except OSError:
@@ -211,7 +220,8 @@ def copy_file_atomic(src: Path, dst: Path) -> None:
         with os.fdopen(fd, "wb") as handle:
             handle.write(src.read_bytes())
         os.replace(tmp_path, dst)
-    except Exception:
+    except Exception as exc:
+        log_exception(f"copy_file_atomic ({src} -> {dst})", exc)
         try:
             os.unlink(tmp_path)
         except OSError:
@@ -328,6 +338,7 @@ def update_seznam_receptu(project_root: Path, slug: str, *, remove: bool = False
 
 
 def ensure_docs_structure(project_root: Path) -> Path:
+    project_root = Path(project_root).resolve()
     docs_root = project_root / "docs"
     docs_root.mkdir(parents=True, exist_ok=True)
     (docs_root / "obrazky").mkdir(parents=True, exist_ok=True)
@@ -335,38 +346,52 @@ def ensure_docs_structure(project_root: Path) -> Path:
 
 
 def sync_docs_images(project_root: Path) -> None:
+    project_root = Path(project_root).resolve()
     source_dir = project_root / "obrazky"
-    if not source_dir.exists():
-        return
     docs_dir = ensure_docs_structure(project_root) / "obrazky"
-    for image in sorted(source_dir.iterdir(), key=lambda item: item.name.lower()):
-        if not image.is_file():
+
+    if source_dir.exists():
+        for image in sorted(source_dir.iterdir(), key=lambda item: item.name.lower()):
+            if image.is_file():
+                try:
+                    copy_file_atomic(image, docs_dir / image.name)
+                except OSError as exc:
+                    log_exception(f"sync_docs_images ({image})", exc)
+
+    for recipe in load_all_recipes(project_root):
+        if not recipe.foto:
             continue
-        copy_file_atomic(image, docs_dir / image.name)
+        source_path = project_root / "obrazky" / recipe.foto
+        if not source_path.exists():
+            continue
+        try:
+            copy_file_atomic(source_path, docs_dir / recipe.foto)
+        except OSError as exc:
+            log_exception(f"sync_docs_images used photo ({source_path})", exc)
 
 
-def update_master_index(project_root: Path) -> None:
+def update_master_index(project_root: Path) -> List[dict]:
+    project_root = Path(project_root).resolve()
+    ensure_project_structure(project_root)
+    ensure_docs_structure(project_root)
+
     recipes: List[dict] = []
     for item in list_recipe_json_paths(project_root):
         try:
             payload = load_json(item)
-        except (json.JSONDecodeError, OSError):
+            recipe = Recipe.from_dict(payload)
+            recipe.slug = recipe.slug or item.stem
+            recipes.append(recipe.to_dict())
+        except (FileNotFoundError, json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+            log_exception(f"update_master_index ({item})", exc)
             continue
-        recipe = Recipe.from_dict(payload)
-        recipes.append({
-            "slug": recipe.slug or generate_slug(recipe.nazev),
-            "nazev": recipe.nazev,
-            "cas": recipe.cas,
-            "porce": recipe.porce,
-            "obtiznost": recipe.obtiznost,
-            "foto": recipe.foto,
-        })
 
     index_path = project_root / "data" / "recepty.json"
     write_json_atomic(index_path, recipes)
     docs_root = ensure_docs_structure(project_root)
     write_json_atomic(docs_root / "recepty.json", recipes)
     sync_docs_images(project_root)
+    return recipes
 
 
 def save_recipe(project_root: Path, recipe: Recipe, current_slug: Optional[str] = None) -> Recipe:
@@ -407,14 +432,16 @@ def save_recipe(project_root: Path, recipe: Recipe, current_slug: Optional[str] 
 
 
 def delete_recipe(project_root: Path, slug: str) -> None:
+    project_root = Path(project_root).resolve()
     ensure_project_structure(project_root)
     json_path = project_root / "data" / f"{slug}.json"
     tex_path = project_root / "recepty" / f"{slug}.tex"
 
     try:
         recipe = load_recipe_from_json(project_root, slug)
-    except FileNotFoundError:
+    except FileNotFoundError as exc:
         recipe = None
+        log_exception(f"delete_recipe load ({project_root}, {slug})", exc)
 
     if recipe and recipe.foto:
         for base in [project_root / "obrazky", ensure_docs_structure(project_root) / "obrazky"]:
@@ -430,6 +457,7 @@ def delete_recipe(project_root: Path, slug: str) -> None:
 
 
 def load_all_recipes(project_root: Path) -> List[Recipe]:
+    project_root = Path(project_root).resolve()
     ensure_project_structure(project_root)
     recipes: List[Recipe] = []
     for path in list_recipe_json_paths(project_root):
@@ -438,26 +466,32 @@ def load_all_recipes(project_root: Path) -> List[Recipe]:
             recipe = Recipe.from_dict(payload)
             recipe.slug = path.stem
             recipes.append(recipe)
-        except (FileNotFoundError, json.JSONDecodeError, OSError, ValueError):
+        except (FileNotFoundError, json.JSONDecodeError, OSError, ValueError) as exc:
+            log_exception(f"load_all_recipes ({path})", exc)
             continue
     return sorted(recipes, key=lambda item: item.nazev.lower())
 
 
 def get_project_root_from_config(config_path: Path) -> Path:
+    config_path = Path(config_path).resolve()
     if not config_path.exists():
-        return Path.cwd()
+        return Path.cwd().resolve()
     try:
         payload = load_json(config_path)
         if isinstance(payload, dict) and payload.get("project_root"):
             root = Path(str(payload["project_root"]))
+            if not root.is_absolute():
+                root = (config_path.parent / root).resolve()
             if root.exists():
-                return root
-    except (json.JSONDecodeError, OSError, TypeError, ValueError):
-        pass
-    return Path.cwd()
+                return root.resolve()
+    except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+        log_exception(f"get_project_root_from_config ({config_path})", exc)
+    return Path.cwd().resolve()
 
 
 def save_project_root_to_config(config_path: Path, project_root: Path) -> None:
+    project_root = Path(project_root).resolve()
+    config_path = Path(config_path).resolve()
     config_path.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(config_path, {"project_root": str(project_root)})
 

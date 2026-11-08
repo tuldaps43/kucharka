@@ -21,6 +21,7 @@ from recipe_logic import (
     recipe_to_tex,
     save_project_root_to_config,
     save_recipe,
+    update_master_index,
 )
 
 
@@ -61,6 +62,7 @@ class RecipeApp:
         file_menu.add_command(label="Vybrat složku projektu", command=self.choose_project_folder)
         file_menu.add_separator()
         file_menu.add_command(label="Uložit", command=self.save_current_recipe, accelerator="Ctrl+S")
+        file_menu.add_command(label="Znovu sestavit recepty.json", command=self.rebuild_index)
         menubar.add_cascade(label="Soubor", menu=file_menu)
         self.root.config(menu=menubar)
 
@@ -114,6 +116,10 @@ class RecipeApp:
         actions.columnconfigure(1, weight=1)
         ttk.Button(actions, text="Uložit", command=self.save_current_recipe).grid(row=0, column=0, sticky="ew", padx=(0, 4))
         ttk.Button(actions, text="Náhled .tex", command=self.preview_tex).grid(row=0, column=1, sticky="ew", padx=(4, 0))
+
+        self.status_var = tk.StringVar(value="")
+        self.status_label = ttk.Label(self.form_frame, textvariable=self.status_var, foreground="#2a6f3a", anchor="w")
+        self.status_label.grid(row=1000, column=0, columnspan=2, sticky="ew", pady=(8, 0))
 
     def _build_form_fields(self) -> None:
         current_row = 0
@@ -199,12 +205,18 @@ class RecipeApp:
             messagebox.showinfo("Adresář projektu", "Vyberte složku projektu, ve které je struktura kuchařky.")
         self.choose_project_folder()
 
+    def _set_status(self, message: str, *, success: bool = True) -> None:
+        self.status_var.set(message)
+        if self.status_label.winfo_exists():
+            self.status_label.configure(foreground="#2a6f3a" if success else "#9b1c1c")
+
     def choose_project_folder(self) -> None:
         directory = filedialog.askdirectory(title="Vyberte složku projektu")
         if not directory:
             return
         self.project_root = Path(directory).resolve()
         save_project_root_to_config(self.config_path, self.project_root)
+        self._set_status(f"Projekt: {self.project_root}")
         self._refresh_recipe_list()
         self._add_empty_recipe()
 
@@ -506,13 +518,16 @@ class RecipeApp:
             self.original_recipe = saved
             self._refresh_recipe_list()
             self.root.title("Kuchařka - recepty")
+            self._set_status(f"Uloženo: {self.project_root / 'data' / f'{saved.slug}.json'}; {self.project_root / 'docs' / 'recepty.json'}")
             messagebox.showinfo("Uloženo", f"Recept '{saved.nazev}' byl úspěšně uložen.")
             self.root.update_idletasks()
             return True
         except RecipeConflictError as exc:
+            self._set_status(f"Kolize slugu: {exc}", success=False)
             messagebox.showerror("Kolize slugu", str(exc))
             return False
         except (OSError, ValueError) as exc:
+            self._set_status(f"Chyba při ukládání: {exc}", success=False)
             messagebox.showerror("Chyba při ukládání", str(exc))
             return False
 
@@ -541,10 +556,24 @@ class RecipeApp:
             return
         try:
             delete_recipe(self.project_root, self.current_slug)
+            self._set_status(f"Smazáno a index znovu sestaven: {self.project_root}")
             self._add_empty_recipe()
             self._refresh_recipe_list()
         except OSError as exc:
+            self._set_status(f"Chyba při mazání: {exc}", success=False)
             messagebox.showerror("Chyba při mazání", str(exc))
+
+    def rebuild_index(self) -> None:
+        if not self.project_root.exists():
+            messagebox.showwarning("Chybí projekt", "Vyberte nejdřív složku projektu.")
+            return
+        try:
+            items = update_master_index(self.project_root)
+            self._set_status(f"Sestaveno {len(items)} receptů do data/recepty.json a docs/recepty.json")
+            messagebox.showinfo("Index uložen", f"Recepty byly znovu sestaveny. Nalezeno: {len(items)}.")
+        except Exception as exc:
+            self._set_status(f"Chyba při sestavení indexu: {exc}", success=False)
+            messagebox.showerror("Chyba při sestavení indexu", str(exc))
 
     def on_close(self) -> None:
         if self._has_unsaved_changes():
