@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'kucharka-v1';
+const CACHE_VERSION = 'kucharka-v2';
 const APP_CACHE = `kucharka-app-${CACHE_VERSION}`;
 const DATA_CACHE = `kucharka-data-${CACHE_VERSION}`;
 const APP_SHELL = [
