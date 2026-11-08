@@ -45,6 +45,29 @@ function safeText(value) {
   return String(value || '').trim();
 }
 
+function getRecipeIngredients(recipe) {
+  if (Array.isArray(recipe?.ingredience)) {
+    return recipe.ingredience;
+  }
+  if (Array.isArray(recipe?.ingredients)) {
+    return recipe.ingredients;
+  }
+  return [];
+}
+
+function getRecipeSteps(recipe) {
+  if (Array.isArray(recipe?.postup)) {
+    return recipe.postup;
+  }
+  if (Array.isArray(recipe?.steps)) {
+    return recipe.steps;
+  }
+  if (Array.isArray(recipe?.kroky)) {
+    return recipe.kroky;
+  }
+  return [];
+}
+
 function formatNumber(value) {
   if (!Number.isFinite(value)) {
     return '0';
@@ -193,7 +216,7 @@ function renderList() {
   const query = normalizeText(dom.searchInput.value);
   const filtered = state.recipes.filter((recipe) => {
     const titleMatch = normalizeText(recipe.nazev).includes(query);
-    const ingredientsMatch = (recipe.ingredience || []).some((ingredient) => {
+    const ingredientsMatch = getRecipeIngredients(recipe).some((ingredient) => {
       const text = `${ingredient.nazev || ''} ${ingredient.jednotka || ''} ${ingredient.mnozstvi || ''}`;
       return normalizeText(text).includes(query);
     });
@@ -355,7 +378,7 @@ function showDetailPage(recipeSlug) {
   const ingredientList = document.createElement('ul');
   ingredientList.className = 'list-box';
 
-  (recipe.ingredience || []).forEach((ingredient, index) => {
+  getRecipeIngredients(recipe).forEach((ingredient, index) => {
     const item = document.createElement('li');
     item.className = 'check-item';
     if (getIngredientState(recipeSlug, index)) {
@@ -394,7 +417,7 @@ function showDetailPage(recipeSlug) {
   const stepsList = document.createElement('div');
   stepsList.className = 'list-box';
 
-  (recipe.postup || []).forEach((step, index) => {
+  getRecipeSteps(recipe).forEach((step, index) => {
     const card = document.createElement('div');
     card.className = 'step-item';
     if (getStepState(recipeSlug, index)) {
@@ -765,6 +788,16 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+async function refreshServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    return;
+  }
+
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+  await navigator.serviceWorker.register('./service-worker.js');
+}
+
 function bindEvents() {
   dom.searchInput.addEventListener('input', (event) => {
     state.searchText = event.target.value;
@@ -775,9 +808,7 @@ function bindEvents() {
     window.location.hash = '#/';
   });
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-  }
+  refreshServiceWorker().catch(() => {});
 }
 
 async function initApp() {
