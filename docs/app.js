@@ -464,6 +464,8 @@ function showDetailPage(recipeSlug) {
     stepsList.appendChild(card);
   });
 
+  stepsSection.append(stepsTitle, stepsList);
+
   const tipSection = document.createElement('div');
   tipSection.className = 'detail-section';
   if (safeText(recipe.tip)) {
