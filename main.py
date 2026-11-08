@@ -12,6 +12,7 @@ from recipe_logic import (
     Recipe,
     RecipeConflictError,
     UNIT_OPTIONS,
+    copy_file_atomic,
     delete_recipe,
     detect_slug_conflict,
     generate_slug,
@@ -384,6 +385,10 @@ class RecipeApp:
                 destination.unlink()
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
+
+            docs_destination = self.project_root / "docs" / "obrazky" / source.name
+            copy_file_atomic(source, docs_destination)
+
             self.foto_var.set(source.name)
             self._mark_dirty()
         except OSError as exc:

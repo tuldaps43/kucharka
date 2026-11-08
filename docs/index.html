@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#C0392B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Kuchařka" />
+    <meta name="description" content="Mobilní kuchařka pro vaření s recepty, časovači a nákupním seznamem." />
+    <title>Kuchařka</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./icons/192.png" />
+    <link rel="apple-touch-icon" href="./icons/192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <button id="backButton" class="icon-button hidden" type="button" aria-label="Zpět">←</button>
+        <h1 id="appTitle">Kuchařka</h1>
+      </header>
+
+      <div id="timerBar" class="timer-bar" aria-live="polite"></div>
+
+      <main id="mainContent">
+        <section id="listPage" class="page active" aria-label="Seznam receptů">
+          <div class="toolbar card">
+            <label class="sr-only" for="searchInput">Vyhledat recept</label>
+            <input id="searchInput" type="search" placeholder="Hledat recept nebo ingredienci" autocomplete="off" />
+          </div>
+
+          <div id="emptyState" class="empty-state hidden" role="status">
+            <p>Žádné recepty neodpovídají hledání.</p>
+          </div>
+
+          <div id="recipeList" class="recipe-list" aria-live="polite"></div>
+        </section>
+
+        <section id="detailPage" class="page" aria-label="Detail receptu">
+          <article id="recipeDetail" class="recipe-detail"></article>
+        </section>
+      </main>
+    </div>
+
+    <div id="globalAlert" class="global-alert hidden" role="alertdialog" aria-modal="true" aria-live="assertive">
+      <div class="alert-card">
+        <h2>Časovač vypršel</h2>
+        <p id="alertMessage">Hotovo.</p>
+        <button id="alertOkButton" type="button">OK</button>
+      </div>
+    </div>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

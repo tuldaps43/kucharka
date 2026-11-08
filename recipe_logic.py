@@ -202,6 +202,23 @@ def write_text_atomic(path: Path, text: str) -> None:
         raise
 
 
+def copy_file_atomic(src: Path, dst: Path) -> None:
+    if not src.exists():
+        raise FileNotFoundError(f"Soubor neexistuje: {src}")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=f".{dst.name}.", suffix=".tmp", dir=str(dst.parent))
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(src.read_bytes())
+        os.replace(tmp_path, dst)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
 def read_text_utf8(path: Path) -> str:
     if not path.exists():
         return ""
@@ -310,6 +327,24 @@ def update_seznam_receptu(project_root: Path, slug: str, *, remove: bool = False
     write_text_atomic(seznam_path, text)
 
 
+def ensure_docs_structure(project_root: Path) -> Path:
+    docs_root = project_root / "docs"
+    docs_root.mkdir(parents=True, exist_ok=True)
+    (docs_root / "obrazky").mkdir(parents=True, exist_ok=True)
+    return docs_root
+
+
+def sync_docs_images(project_root: Path) -> None:
+    source_dir = project_root / "obrazky"
+    if not source_dir.exists():
+        return
+    docs_dir = ensure_docs_structure(project_root) / "obrazky"
+    for image in sorted(source_dir.iterdir(), key=lambda item: item.name.lower()):
+        if not image.is_file():
+            continue
+        copy_file_atomic(image, docs_dir / image.name)
+
+
 def update_master_index(project_root: Path) -> None:
     recipes: List[dict] = []
     for item in list_recipe_json_paths(project_root):
@@ -326,7 +361,12 @@ def update_master_index(project_root: Path) -> None:
             "obtiznost": recipe.obtiznost,
             "foto": recipe.foto,
         })
-    write_json_atomic(project_root / "data" / "recepty.json", recipes)
+
+    index_path = project_root / "data" / "recepty.json"
+    write_json_atomic(index_path, recipes)
+    docs_root = ensure_docs_structure(project_root)
+    write_json_atomic(docs_root / "recepty.json", recipes)
+    sync_docs_images(project_root)
 
 
 def save_recipe(project_root: Path, recipe: Recipe, current_slug: Optional[str] = None) -> Recipe:
@@ -370,6 +410,18 @@ def delete_recipe(project_root: Path, slug: str) -> None:
     ensure_project_structure(project_root)
     json_path = project_root / "data" / f"{slug}.json"
     tex_path = project_root / "recepty" / f"{slug}.tex"
+
+    try:
+        recipe = load_recipe_from_json(project_root, slug)
+    except FileNotFoundError:
+        recipe = None
+
+    if recipe and recipe.foto:
+        for base in [project_root / "obrazky", ensure_docs_structure(project_root) / "obrazky"]:
+            photo_path = base / recipe.foto
+            if photo_path.exists():
+                photo_path.unlink()
+
     for path in [json_path, tex_path]:
         if path.exists():
             path.unlink()

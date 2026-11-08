@@ -1,0 +1,46 @@
+[
+  {
+    "slug": "palacinky",
+    "nazev": "Palačinky",
+    "cas": "20 min",
+    "porce": "4",
+    "obtiznost": "snadná",
+    "foto": "",
+    "ingredience": [
+      { "mnozstvi": "250", "jednotka": "g", "nazev": "hladké mouky" },
+      { "mnozstvi": "2", "jednotka": "ks", "nazev": "vejce" },
+      { "mnozstvi": "500", "jednotka": "ml", "nazev": "mléka" },
+      { "mnozstvi": "1", "jednotka": "lžička", "nazev": "cukru" },
+      { "mnozstvi": "1", "jednotka": "špetka", "nazev": "soli" }
+    ],
+    "postup": [
+      { "text": "Všechny suroviny vložte do mísy a dobře rozšlehejte hladké těsto.", "casovac_min": null },
+      { "text": "Pánev rozehřejte a smažte palačinky po jedné straně zhruba 1 minutu.", "casovac_min": 1 },
+      { "text": "Otočte a smažte ještě 30–60 sekund, až budou pěkně zlaté.", "casovac_min": 1 },
+      { "text": "Podávejte s ovocem, povidly nebo javorovým sirupem.", "casovac_min": null }
+    ],
+    "tip": "Těsto nechte 10 minut odpočinout, bude se lépe rozlévat a palačinky budou jemnější."
+  },
+  {
+    "slug": "bramborova-polenta",
+    "nazev": "Bramborová polenta",
+    "cas": "35 min",
+    "porce": "3",
+    "obtiznost": "střední",
+    "foto": "",
+    "ingredience": [
+      { "mnozstvi": "700", "jednotka": "g", "nazev": "brambor" },
+      { "mnozstvi": "200", "jednotka": "g", "nazev": "mléka" },
+      { "mnozstvi": "50", "jednotka": "g", "nazev": "másla" },
+      { "mnozstvi": "1", "jednotka": "ks", "nazev": "stroužek česneku" },
+      { "mnozstvi": "1", "jednotka": "lžička", "nazev": "soli" }
+    ],
+    "postup": [
+      { "text": "Brambory uvařte doměkka a rozmačkejte je na pyré.", "casovac_min": 20 },
+      { "text": "Vmíchejte mléko, máslo a prolisovaný česnek.", "casovac_min": null },
+      { "text": "Nechte směs krátce provařit a dochuťte solí.", "casovac_min": 5 },
+      { "text": "Podávejte s cibulkou a bylinkami.", "casovac_min": null }
+    ],
+    "tip": "Jemnější konzistence získáte, když do polenty vmícháte ještě trochu rozpuštěného másla na závěr."
+  }
+]
