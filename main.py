@@ -33,8 +33,10 @@ class RecipeApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Kuchařka - recepty")
-        self.root.geometry("1280x820")
-        self.root.minsize(1100, 700)
+        self.root.geometry("1400x860")
+        self.root.minsize(1200, 760)
+        self.root.configure(bg="#f3f6fb")
+        self._configure_style()
 
         self.app_dir = Path(__file__).resolve().parent
         self.config_path = self.app_dir / "config.json"
@@ -56,6 +58,28 @@ class RecipeApp:
         else:
             self._show_project_selection()
 
+    def _configure_style(self) -> None:
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+
+        style.configure(".", background="#f3f6fb", foreground="#172033", font=("Segoe UI", 10))
+        style.configure("Modern.TFrame", background="#f3f6fb")
+        style.configure("Card.TFrame", background="#ffffff")
+        style.configure("Surface.TFrame", background="#f8fafc")
+        style.configure("Primary.TButton", background="#ff7a59", foreground="#ffffff", font=("Segoe UI", 10, "bold"), padding=(16, 8), borderwidth=0)
+        style.configure("Secondary.TButton", background="#edf3ff", foreground="#1f2937", font=("Segoe UI", 10, "bold"), padding=(14, 8), borderwidth=0)
+        style.configure("Accent.TLabel", background="#ffffff", foreground="#ff7a59", font=("Segoe UI", 10, "bold"))
+        style.configure("Header.TLabel", background="#ffffff", foreground="#0f172a", font=("Segoe UI", 15, "bold"))
+        style.configure("TEntry", padding=8, fieldbackground="#f8fafc", foreground="#0f172a")
+        style.configure("TCombobox", padding=8, fieldbackground="#f8fafc", foreground="#0f172a")
+        style.configure("TLabel", background="#ffffff", foreground="#334155")
+        style.configure("TLabelframe", background="#ffffff", foreground="#0f172a")
+        style.configure("TLabelframe.Label", background="#ffffff", foreground="#0f172a", font=("Segoe UI", 10, "bold"))
+        style.configure("TSeparator", background="#e2e8f0")
+
+        style.map("Primary.TButton", background=[("active", "#ef6a4d"), ("pressed", "#e56345")], foreground=[("active", "#ffffff")])
+        style.map("Secondary.TButton", background=[("active", "#e1ebff"), ("pressed", "#d7e6ff")], foreground=[("active", "#0f172a")])
+
     def _build_menu(self) -> None:
         menubar = tk.Menu(self.root)
         file_menu = tk.Menu(menubar, tearoff=0)
@@ -70,122 +94,155 @@ class RecipeApp:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
-        split = ttk.Panedwindow(self.root, orient=tk.HORIZONTAL)
-        split.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        shell = ttk.Frame(self.root, style="Modern.TFrame", padding=16)
+        shell.grid(row=0, column=0, sticky="nsew")
+        shell.columnconfigure(0, weight=1)
+        shell.rowconfigure(0, weight=1)
 
-        left = ttk.Frame(split, padding=8)
+        split = ttk.Panedwindow(shell, orient=tk.HORIZONTAL)
+        split.grid(row=0, column=0, sticky="nsew")
+
+        left = ttk.Frame(split, padding=14, style="Card.TFrame")
         left.columnconfigure(0, weight=1)
-        left.rowconfigure(1, weight=1)
+        left.rowconfigure(2, weight=1)
         split.add(left, weight=1)
 
-        top_left = ttk.Frame(left)
-        top_left.grid(row=0, column=0, sticky="ew")
-        ttk.Label(top_left, text="Recepty").grid(row=0, column=0, sticky="w")
+        top_left = ttk.Frame(left, style="Card.TFrame")
+        top_left.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        ttk.Label(top_left, text="Recepty", style="Header.TLabel").grid(row=0, column=0, sticky="w")
 
-        button_row = ttk.Frame(left)
-        button_row.grid(row=1, column=0, sticky="ew", pady=(8, 4))
+        self.project_label = ttk.Label(top_left, text="Projekt: ...", style="Accent.TLabel", anchor="w")
+        self.project_label.grid(row=1, column=0, sticky="ew", pady=(6, 0))
+
+        button_row = ttk.Frame(left, style="Surface.TFrame")
+        button_row.grid(row=2, column=0, sticky="ew", pady=(0, 10), padx=0)
         button_row.columnconfigure(0, weight=1)
         button_row.columnconfigure(1, weight=1)
 
-        ttk.Button(button_row, text="Nový recept", command=self._add_empty_recipe).grid(row=0, column=0, sticky="ew", padx=(0, 4))
-        ttk.Button(button_row, text="Smazat", command=self.delete_current_recipe).grid(row=0, column=1, sticky="ew", padx=(4, 0))
+        ttk.Button(button_row, text="Nový recept", command=self._add_empty_recipe, style="Secondary.TButton").grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Button(button_row, text="Smazat", command=self.delete_current_recipe, style="Secondary.TButton").grid(row=0, column=1, sticky="ew", padx=(4, 0))
 
-        self.recipe_listbox = tk.Listbox(left, exportselection=False, activestyle="none")
-        self.recipe_listbox.grid(row=2, column=0, sticky="nsew")
+        self.recipe_listbox = tk.Listbox(
+            left,
+            exportselection=False,
+            activestyle="none",
+            bg="#f8fafc",
+            fg="#172033",
+            bd=0,
+            relief="flat",
+            selectbackground="#dbeafe",
+            selectforeground="#172033",
+            font=("Segoe UI", 10),
+            highlightthickness=0,
+        )
+        self.recipe_listbox.grid(row=3, column=0, sticky="nsew", padx=(0, 0), pady=(0, 0))
         self.recipe_listbox.bind("<<ListboxSelect>>", self._on_recipe_selected)
 
-        right = ttk.Frame(split, padding=8)
+        right = ttk.Frame(split, padding=14, style="Card.TFrame")
         right.columnconfigure(0, weight=1)
         split.add(right, weight=3)
 
-        self.form_canvas = tk.Canvas(right, borderwidth=0, highlightthickness=0)
+        toolbar = ttk.Frame(right, style="Surface.TFrame")
+        toolbar.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        toolbar.columnconfigure(0, weight=1)
+        toolbar.columnconfigure(1, weight=1)
+        toolbar.columnconfigure(2, weight=1)
+        toolbar.columnconfigure(3, weight=1)
+
+        ttk.Button(toolbar, text="Uložit", command=self.save_current_recipe, style="Primary.TButton").grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        ttk.Button(toolbar, text="Náhled .tex", command=self.preview_tex, style="Secondary.TButton").grid(row=0, column=1, sticky="ew", padx=6)
+        ttk.Button(toolbar, text="Nový recept", command=self._add_empty_recipe, style="Secondary.TButton").grid(row=0, column=2, sticky="ew", padx=6)
+        ttk.Button(toolbar, text="Sestavit index", command=self.rebuild_index, style="Secondary.TButton").grid(row=0, column=3, sticky="ew", padx=(6, 0))
+
+        self.form_canvas = tk.Canvas(right, borderwidth=0, highlightthickness=0, bg="#f3f6fb")
         self.form_canvas.grid(row=0, column=0, sticky="nsew")
         self.form_scroll = ttk.Scrollbar(right, orient="vertical", command=self.form_canvas.yview)
         self.form_scroll.grid(row=0, column=1, sticky="ns")
         self.form_canvas.configure(yscrollcommand=self.form_scroll.set)
 
-        self.form_frame = ttk.Frame(self.form_canvas)
+        self.form_frame = ttk.Frame(self.form_canvas, style="Card.TFrame")
         self.form_canvas.create_window((0, 0), window=self.form_frame, anchor="nw")
         self.form_frame.bind("<Configure>", lambda event: self.form_canvas.configure(scrollregion=self.form_canvas.bbox("all")))
 
         self._build_form_fields()
 
-        actions = ttk.Frame(self.form_frame)
-        actions.grid(row=999, column=0, columnspan=2, sticky="ew", pady=(8, 4))
+        actions = ttk.Frame(self.form_frame, style="Surface.TFrame")
+        actions.grid(row=999, column=0, columnspan=2, sticky="ew", pady=(12, 8), padx=(0, 0))
         actions.columnconfigure(0, weight=1)
         actions.columnconfigure(1, weight=1)
-        ttk.Button(actions, text="Uložit", command=self.save_current_recipe).grid(row=0, column=0, sticky="ew", padx=(0, 4))
-        ttk.Button(actions, text="Náhled .tex", command=self.preview_tex).grid(row=0, column=1, sticky="ew", padx=(4, 0))
+        ttk.Button(actions, text="Uložit", command=self.save_current_recipe, style="Primary.TButton").grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Button(actions, text="Náhled .tex", command=self.preview_tex, style="Secondary.TButton").grid(row=0, column=1, sticky="ew", padx=(4, 0))
 
         self.status_var = tk.StringVar(value="")
-        self.status_label = ttk.Label(self.form_frame, textvariable=self.status_var, foreground="#2a6f3a", anchor="w")
-        self.status_label.grid(row=1000, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        self.status_label = ttk.Label(self.form_frame, textvariable=self.status_var, foreground="#2a6f3a", anchor="w", font=("Segoe UI", 9, "bold"))
+        self.status_label.grid(row=1000, column=0, columnspan=2, sticky="ew", pady=(10, 0))
 
     def _build_form_fields(self) -> None:
         current_row = 0
 
-        ttk.Label(self.form_frame, text="Název receptu").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(5, 2))
+        ttk.Label(self.form_frame, text="Název receptu").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(6, 2))
         self.nazev_var = tk.StringVar()
         ttk.Entry(self.form_frame, textvariable=self.nazev_var, width=60).grid(row=current_row, column=1, sticky="ew")
         self.nazev_var.trace_add("write", lambda *_: self._mark_dirty())
         current_row += 1
 
-        ttk.Label(self.form_frame, text="Čas").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(5, 2))
+        ttk.Label(self.form_frame, text="Čas").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(6, 2))
         self.cas_var = tk.StringVar()
         ttk.Entry(self.form_frame, textvariable=self.cas_var, width=30).grid(row=current_row, column=1, sticky="ew")
         self.cas_var.trace_add("write", lambda *_: self._mark_dirty())
         current_row += 1
 
-        ttk.Label(self.form_frame, text="Počet porcí").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(5, 2))
+        ttk.Label(self.form_frame, text="Počet porcí").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(6, 2))
         self.porce_var = tk.StringVar()
         ttk.Entry(self.form_frame, textvariable=self.porce_var, width=30).grid(row=current_row, column=1, sticky="ew")
         self.porce_var.trace_add("write", lambda *_: self._mark_dirty())
         current_row += 1
 
-        ttk.Label(self.form_frame, text="Obtížnost").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(5, 2))
+        ttk.Label(self.form_frame, text="Obtížnost").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(6, 2))
         self.obtiznost_var = tk.StringVar()
         self.obtiznost_combo = ttk.Combobox(self.form_frame, textvariable=self.obtiznost_var, values=["snadná", "střední", "náročná"], state="normal")
         self.obtiznost_combo.grid(row=current_row, column=1, sticky="ew")
         self.obtiznost_var.trace_add("write", lambda *_: self._mark_dirty())
         current_row += 1
 
-        ttk.Label(self.form_frame, text="Foto").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(5, 2))
-        photo_row = ttk.Frame(self.form_frame)
+        ttk.Label(self.form_frame, text="Foto").grid(row=current_row, column=0, sticky="w", padx=(0, 10), pady=(6, 2))
+        photo_row = ttk.Frame(self.form_frame, style="Surface.TFrame")
         photo_row.grid(row=current_row, column=1, sticky="ew")
         self.foto_var = tk.StringVar()
         ttk.Entry(photo_row, textvariable=self.foto_var, width=50).grid(row=0, column=0, sticky="ew")
-        ttk.Button(photo_row, text="Vybrat soubor", command=self._choose_photo).grid(row=0, column=1, padx=(8, 0), sticky="ew")
+        ttk.Button(photo_row, text="Vybrat soubor", command=self._choose_photo, style="Secondary.TButton").grid(row=0, column=1, padx=(8, 0), sticky="ew")
         photo_row.columnconfigure(0, weight=1)
         current_row += 1
 
-        ttk.Separator(self.form_frame, orient=tk.HORIZONTAL).grid(row=current_row, column=0, columnspan=2, sticky="ew", pady=(12, 8))
+        ttk.Separator(self.form_frame, orient=tk.HORIZONTAL).grid(row=current_row, column=0, columnspan=2, sticky="ew", pady=(14, 10))
         current_row += 1
 
         ingred_frame = ttk.LabelFrame(self.form_frame, text="Ingredience")
         ingred_frame.grid(row=current_row, column=0, columnspan=2, sticky="ew", padx=(0, 0), pady=(0, 8))
         ingred_frame.columnconfigure(0, weight=1)
-        self.ingredients_container = ttk.Frame(ingred_frame)
+        self.ingredients_container = ttk.Frame(ingred_frame, style="Surface.TFrame")
         self.ingredients_container.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
         self.ingredients_container.columnconfigure(0, weight=1)
-        self.add_ingredient_btn = ttk.Button(ingred_frame, text="Přidat ingredienci", command=self._add_ingredient_row)
+        self.add_ingredient_btn = ttk.Button(ingred_frame, text="Přidat ingredienci", command=self._add_ingredient_row, style="Secondary.TButton")
         self.add_ingredient_btn.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 8))
         current_row += 1
 
         postup_frame = ttk.LabelFrame(self.form_frame, text="Postup")
         postup_frame.grid(row=current_row, column=0, columnspan=2, sticky="ew", padx=(0, 0), pady=(0, 8))
         postup_frame.columnconfigure(0, weight=1)
-        self.steps_container = ttk.Frame(postup_frame)
+        self.steps_container = ttk.Frame(postup_frame, style="Surface.TFrame")
         self.steps_container.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
-        ttk.Button(postup_frame, text="Přidat krok", command=self._add_step_row).grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 8))
+        ttk.Button(postup_frame, text="Přidat krok", command=self._add_step_row, style="Secondary.TButton").grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 8))
         current_row += 1
 
-        ttk.Label(self.form_frame, text="Tip").grid(row=current_row, column=0, sticky="nw", padx=(0, 10), pady=(5, 2))
-        self.tip_text = tk.Text(self.form_frame, height=5, width=60, wrap=tk.WORD)
+        ttk.Label(self.form_frame, text="Tip").grid(row=current_row, column=0, sticky="nw", padx=(0, 10), pady=(8, 2))
+        self.tip_text = tk.Text(self.form_frame, height=5, width=60, wrap=tk.WORD, bg="#f8fafc", fg="#172033", insertbackground="#172033", relief="flat", borderwidth=1)
         self.tip_text.grid(row=current_row, column=1, sticky="ew")
         self.tip_text.bind("<KeyRelease>", lambda event: self._mark_dirty())
         current_row += 1
 
         self.form_frame.columnconfigure(1, weight=1)
+        self._set_status("Připraveno")
 
     def _bind_shortcuts(self) -> None:
         self.root.bind("<Control-s>", lambda event: self.save_current_recipe())
@@ -206,9 +263,14 @@ class RecipeApp:
         self.choose_project_folder()
 
     def _set_status(self, message: str, *, success: bool = True) -> None:
+        if not hasattr(self, "status_var") or self.status_var is None:
+            self.status_var = tk.StringVar(value="")
+
         self.status_var.set(message)
-        if self.status_label.winfo_exists():
-            self.status_label.configure(foreground="#2a6f3a" if success else "#9b1c1c")
+
+        label = getattr(self, "status_label", None)
+        if label is not None and label.winfo_exists():
+            label.configure(foreground="#2a6f3a" if success else "#9b1c1c")
 
     def choose_project_folder(self) -> None:
         directory = filedialog.askdirectory(title="Vyberte složku projektu")
@@ -216,6 +278,7 @@ class RecipeApp:
             return
         self.project_root = Path(directory).resolve()
         save_project_root_to_config(self.config_path, self.project_root)
+        self.project_label.configure(text=f"Projekt: {self.project_root}")
         self._set_status(f"Projekt: {self.project_root}")
         self._refresh_recipe_list()
         self._add_empty_recipe()
