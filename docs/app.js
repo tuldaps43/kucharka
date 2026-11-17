@@ -6,6 +6,8 @@ const STORAGE_KEYS = {
   TIMERS: 'kucharka_timers'
 };
 
+const SERVICE_WORKER_URL = './service-worker.js?v=3';
+
 const state = {
   recipes: [],
   searchText: '',
@@ -1016,7 +1018,7 @@ async function refreshServiceWorker() {
 
   const registrations = await navigator.serviceWorker.getRegistrations();
   await Promise.all(registrations.map((registration) => registration.unregister()));
-  await navigator.serviceWorker.register('./service-worker.js');
+  await navigator.serviceWorker.register(SERVICE_WORKER_URL, { updateViaCache: 'none' });
 }
 
 function bindEvents() {
