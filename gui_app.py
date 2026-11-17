@@ -343,19 +343,8 @@ class RecipeApp(ctk.CTk):
             messagebox.showerror("Git", "V projektu není inicializovaný git repozitář.")
             return
 
-        candidates = [
-            self.project_root / "data",
-            self.project_root / "recepty",
-            self.project_root / "obrazky",
-            self.project_root / "docs" / "recepty.json",
-            self.project_root / "seznam-receptu.tex",
-        ]
-        add_paths = [str(path.relative_to(self.project_root)) for path in candidates if path.exists()]
-        if not add_paths:
-            self.show_toast("Git: Žádné soubory k nahrání")
-            return
-
-        add_result = self._run_git_command(["git", "add", "--", *add_paths])
+        # Stage all changed files in the repository, including app code and docs.
+        add_result = self._run_git_command(["git", "add", "-A"])
         if add_result.returncode != 0:
             messagebox.showerror("Git", f"Nepodařilo se přidat soubory:\n{add_result.stderr.strip()}")
             return
@@ -380,7 +369,12 @@ class RecipeApp(ctk.CTk):
             messagebox.showerror("Git", f"Push selhal:\n{push_result.stderr.strip() or push_result.stdout.strip()}")
             return
 
-        self.show_toast(f"Git: Odesláno {len(changed_files)} souborů")
+        commit_hash = self._run_git_command(["git", "rev-parse", "--short", "HEAD"])
+        short_hash = commit_hash.stdout.strip() if commit_hash.returncode == 0 else ""
+        if short_hash:
+            self.show_toast(f"Git: Odesláno {len(changed_files)} souborů ({short_hash})")
+        else:
+            self.show_toast(f"Git: Odesláno {len(changed_files)} souborů")
 
     def _handle_mousewheel(self, event):
         if not self.form_scroll.winfo_exists() or not self.form_scroll.winfo_viewable():
