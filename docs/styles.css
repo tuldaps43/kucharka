@@ -243,6 +243,45 @@ img {
   font-size: 1.15rem;
 }
 
+.section-subtitle {
+  margin: 14px 0 8px;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.shopping-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.section-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-card-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.muted-text {
+  color: var(--muted);
+}
+
 .portion-bar {
   display: flex;
   align-items: center;

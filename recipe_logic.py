@@ -91,6 +91,64 @@ class PostupKrok:
 
 
 @dataclass
+class RecipeTime:
+    popis: str = ""
+    hodnota: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "popis": self.popis or "",
+            "hodnota": self.hodnota or "",
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "RecipeTime":
+        value = data or {}
+        return cls(
+            popis=str(value.get("popis", "") or ""),
+            hodnota=str(value.get("hodnota", "") or ""),
+        )
+
+
+@dataclass
+class RecipeSection:
+    nazev: str = ""
+    cas: str = ""
+    ingredience: List[Ingredient] = field(default_factory=list)
+    postup: List[PostupKrok] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "nazev": self.nazev or "",
+            "cas": self.cas or "",
+            "ingredience": [item.to_dict() for item in self.ingredience],
+            "postup": [item.to_dict() for item in self.postup],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "RecipeSection":
+        value = data or {}
+        return cls(
+            nazev=str(value.get("nazev", "") or ""),
+            cas=str(value.get("cas", "") or ""),
+            ingredience=[Ingredient.from_dict(item) for item in value.get("ingredience", [])],
+            postup=[PostupKrok.from_dict(item) for item in value.get("postup", [])],
+        )
+
+    def normalize(self) -> None:
+        self.nazev = (self.nazev or "").strip()
+        self.cas = (self.cas or "").strip()
+        self.ingredience = [
+            item for item in self.ingredience
+            if (item.mnozstvi.strip() or item.jednotka.strip() or item.nazev.strip())
+        ]
+        self.postup = [
+            item for item in self.postup
+            if (item.text.strip() or (item.casovac_min is not None and item.casovac_min != ""))
+        ]
+
+
+@dataclass
 class Recipe:
     slug: str = ""
     nazev: str = ""
@@ -100,6 +158,8 @@ class Recipe:
     foto: str = ""
     ingredience: List[Ingredient] = field(default_factory=list)
     postup: List[PostupKrok] = field(default_factory=list)
+    casy: List[RecipeTime] = field(default_factory=list)
+    casti: List[RecipeSection] = field(default_factory=list)
     tip: str = ""
 
     def to_dict(self) -> dict:
@@ -112,6 +172,8 @@ class Recipe:
             "foto": self.foto or "",
             "ingredience": [item.to_dict() for item in self.ingredience],
             "postup": [item.to_dict() for item in self.postup],
+            "casy": [item.to_dict() for item in self.casy],
+            "casti": [item.to_dict() for item in self.casti],
             "tip": self.tip or "",
         }
 
@@ -127,8 +189,21 @@ class Recipe:
             foto=str(payload.get("foto", "") or ""),
             ingredience=[Ingredient.from_dict(item) for item in payload.get("ingredience", [])],
             postup=[PostupKrok.from_dict(item) for item in payload.get("postup", [])],
+            casy=[RecipeTime.from_dict(item) for item in payload.get("casy", [])],
+            casti=[RecipeSection.from_dict(item) for item in payload.get("casti", [])],
             tip=str(payload.get("tip", "") or ""),
         )
+        if not recipe.casti and (recipe.ingredience or recipe.postup):
+            recipe.casti = [
+                RecipeSection(
+                    nazev="Hlavní část",
+                    cas=recipe.cas,
+                    ingredience=list(recipe.ingredience),
+                    postup=list(recipe.postup),
+                )
+            ]
+        if not recipe.casy and recipe.cas:
+            recipe.casy = [RecipeTime(popis="Celkem", hodnota=recipe.cas)]
         if not recipe.slug:
             recipe.slug = generate_slug(recipe.nazev)
         return recipe
@@ -149,6 +224,36 @@ class Recipe:
         self.porce = (self.porce or "").strip()
         self.obtiznost = (self.obtiznost or "").strip()
         self.foto = (self.foto or "").strip()
+        self.casy = [
+            item for item in self.casy
+            if (item.popis.strip() or item.hodnota.strip())
+        ]
+        for item in self.casy:
+            item.popis = (item.popis or "").strip()
+            item.hodnota = (item.hodnota or "").strip()
+        for section in self.casti:
+            section.normalize()
+        self.casti = [
+            section for section in self.casti
+            if (section.nazev or section.cas or section.ingredience or section.postup)
+        ]
+        if self.casti:
+            agg_ingredience: List[Ingredient] = []
+            agg_postup: List[PostupKrok] = []
+            for section in self.casti:
+                agg_ingredience.extend(section.ingredience)
+                agg_postup.extend(section.postup)
+            self.ingredience = agg_ingredience
+            self.postup = agg_postup
+            if not self.casy:
+                self.casy = [
+                    RecipeTime(popis=section.nazev or f"Část {index + 1}", hodnota=section.cas)
+                    for index, section in enumerate(self.casti)
+                    if section.cas.strip()
+                ]
+        if self.casy:
+            main_time = next((item.hodnota for item in self.casy if item.hodnota.strip()), "")
+            self.cas = main_time or self.cas
         self.slug = generate_slug(self.nazev) if not self.slug else self.slug
 
 
@@ -274,29 +379,71 @@ def recipe_to_tex(recipe: Recipe) -> str:
         lines.append("")
         lines.append(f"\\foto{{{latex_escape(recipe.foto)}}}")
 
-    lines.append("")
-    lines.append("\\begin{ingredience}")
-    for item in recipe.ingredience:
-        nazev = (item.nazev or "").strip()
-        mnoz = (item.mnozstvi or "").strip()
-        jednotka = (item.jednotka or "").strip()
-        if not nazev:
-            continue
-        if mnoz or jednotka:
-            obsah = " ".join([part for part in [mnoz, jednotka] if part]).strip()
-            lines.append(f"  \\item \\textbf{{{latex_escape(obsah)}}} {latex_escape(nazev)}")
-        else:
-            lines.append(f"  \\item {latex_escape(nazev)}")
-    lines.append("\\end{ingredience}")
+    if recipe.casy:
+        lines.append("")
+        lines.append("\\textbf{Časy:}")
+        lines.append("\\begin{itemize}")
+        for item in recipe.casy:
+            popis = (item.popis or "").strip() or "Čas"
+            hodnota = (item.hodnota or "").strip()
+            if not hodnota:
+                continue
+            lines.append(f"  \\item {latex_escape(popis)}: {latex_escape(hodnota)}")
+        lines.append("\\end{itemize}")
 
-    lines.append("")
-    lines.append("\\begin{postup}")
-    for krok in recipe.postup:
-        text = (krok.text or "").strip()
-        if not text:
-            continue
-        lines.append(f"  \\item {latex_escape(text)}")
-    lines.append("\\end{postup}")
+    if recipe.casti:
+        for index, section in enumerate(recipe.casti, start=1):
+            section_name = (section.nazev or "").strip() or f"Část {index}"
+            lines.append("")
+            lines.append(f"\\textbf{{{latex_escape(section_name)}}}")
+            if section.cas.strip():
+                lines.append(f"\\emph{{Čas: {latex_escape(section.cas)}}}")
+
+            lines.append("\\begin{ingredience}")
+            for item in section.ingredience:
+                nazev = (item.nazev or "").strip()
+                mnoz = (item.mnozstvi or "").strip()
+                jednotka = (item.jednotka or "").strip()
+                if not nazev:
+                    continue
+                if mnoz or jednotka:
+                    obsah = " ".join([part for part in [mnoz, jednotka] if part]).strip()
+                    lines.append(f"  \\item \\textbf{{{latex_escape(obsah)}}} {latex_escape(nazev)}")
+                else:
+                    lines.append(f"  \\item {latex_escape(nazev)}")
+            lines.append("\\end{ingredience}")
+
+            lines.append("\\begin{postup}")
+            for krok in section.postup:
+                text = (krok.text or "").strip()
+                if not text:
+                    continue
+                lines.append(f"  \\item {latex_escape(text)}")
+            lines.append("\\end{postup}")
+    else:
+        lines.append("")
+        lines.append("\\begin{ingredience}")
+        for item in recipe.ingredience:
+            nazev = (item.nazev or "").strip()
+            mnoz = (item.mnozstvi or "").strip()
+            jednotka = (item.jednotka or "").strip()
+            if not nazev:
+                continue
+            if mnoz or jednotka:
+                obsah = " ".join([part for part in [mnoz, jednotka] if part]).strip()
+                lines.append(f"  \\item \\textbf{{{latex_escape(obsah)}}} {latex_escape(nazev)}")
+            else:
+                lines.append(f"  \\item {latex_escape(nazev)}")
+        lines.append("\\end{ingredience}")
+
+        lines.append("")
+        lines.append("\\begin{postup}")
+        for krok in recipe.postup:
+            text = (krok.text or "").strip()
+            if not text:
+                continue
+            lines.append(f"  \\item {latex_escape(text)}")
+        lines.append("\\end{postup}")
 
     if recipe.tip.strip():
         lines.append("")
@@ -529,6 +676,8 @@ def recipe_from_form_data(data: dict) -> Recipe:
         foto=str(data.get("foto") or ""),
         ingredience=[],
         postup=[],
+        casy=[],
+        casti=[],
         tip=str(data.get("tip") or ""),
     )
 
@@ -553,5 +702,44 @@ def recipe_from_form_data(data: dict) -> Recipe:
             text=str(item.get("text") or ""),
             casovac_min=num,
         ))
+
+    for item in data.get("casy", []):
+        if not isinstance(item, dict):
+            continue
+        recipe.casy.append(RecipeTime(
+            popis=str(item.get("popis") or ""),
+            hodnota=str(item.get("hodnota") or ""),
+        ))
+
+    for item in data.get("casti", []):
+        if not isinstance(item, dict):
+            continue
+        section = RecipeSection(
+            nazev=str(item.get("nazev") or ""),
+            cas=str(item.get("cas") or ""),
+            ingredience=[],
+            postup=[],
+        )
+        for ing in item.get("ingredience", []):
+            if not isinstance(ing, dict):
+                continue
+            section.ingredience.append(Ingredient(
+                mnozstvi=str(ing.get("mnozstvi") or ""),
+                jednotka=str(ing.get("jednotka") or ""),
+                nazev=str(ing.get("nazev") or ""),
+            ))
+        for step in item.get("postup", []):
+            if not isinstance(step, dict):
+                continue
+            cas = step.get("casovac_min")
+            try:
+                num = int(cas) if cas not in (None, "") else None
+            except (TypeError, ValueError):
+                num = None
+            section.postup.append(PostupKrok(
+                text=str(step.get("text") or ""),
+                casovac_min=num,
+            ))
+        recipe.casti.append(section)
 
     return recipe

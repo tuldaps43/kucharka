@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   CHECKED_INGREDIENTS: 'kucharka_checked_ingredients',
   CHECKED_STEPS: 'kucharka_checked_steps',
+  CHECKED_SHOPPING: 'kucharka_checked_shopping',
   PORTIONS: 'kucharka_portions',
   TIMERS: 'kucharka_timers'
 };
@@ -11,6 +12,8 @@ const state = {
   currentRecipeSlug: null,
   checkedIngredients: {},
   checkedSteps: {},
+  checkedShopping: {},
+  shoppingExpanded: {},
   portionScale: {},
   timers: [],
   wakeLock: null,
@@ -55,6 +58,16 @@ function getRecipeIngredients(recipe) {
   return [];
 }
 
+function getSectionIngredients(section) {
+  if (Array.isArray(section?.ingredience)) {
+    return section.ingredience;
+  }
+  if (Array.isArray(section?.ingredients)) {
+    return section.ingredients;
+  }
+  return [];
+}
+
 function getRecipeSteps(recipe) {
   if (Array.isArray(recipe?.postup)) {
     return recipe.postup;
@@ -66,6 +79,38 @@ function getRecipeSteps(recipe) {
     return recipe.kroky;
   }
   return [];
+}
+
+function getSectionSteps(section) {
+  if (Array.isArray(section?.postup)) {
+    return section.postup;
+  }
+  if (Array.isArray(section?.steps)) {
+    return section.steps;
+  }
+  if (Array.isArray(section?.kroky)) {
+    return section.kroky;
+  }
+  return [];
+}
+
+function getRecipeSections(recipe) {
+  if (Array.isArray(recipe?.casti) && recipe.casti.length > 0) {
+    return recipe.casti;
+  }
+
+  const fallbackIngredients = getRecipeIngredients(recipe);
+  const fallbackSteps = getRecipeSteps(recipe);
+  if (!fallbackIngredients.length && !fallbackSteps.length) {
+    return [];
+  }
+
+  return [{
+    nazev: 'Hlavní část',
+    cas: recipe?.cas || '',
+    ingredience: fallbackIngredients,
+    postup: fallbackSteps
+  }];
 }
 
 function formatNumber(value) {
@@ -150,6 +195,17 @@ function setStepState(recipeSlug, index, value) {
   saveJsonStorage(STORAGE_KEYS.CHECKED_STEPS, state.checkedSteps);
 }
 
+function getShoppingState(recipeSlug, key) {
+  return Boolean((state.checkedShopping[recipeSlug] || {})[key]);
+}
+
+function setShoppingState(recipeSlug, key, value) {
+  const slugMap = state.checkedShopping[recipeSlug] || {};
+  slugMap[key] = value;
+  state.checkedShopping[recipeSlug] = slugMap;
+  saveJsonStorage(STORAGE_KEYS.CHECKED_SHOPPING, state.checkedShopping);
+}
+
 function getPortionScale(recipeSlug) {
   return Number(state.portionScale[recipeSlug] || 1);
 }
@@ -179,6 +235,58 @@ function getScaledIngredientText(item, multiplier) {
   const scaled = parsed * multiplier;
   const quantity = formatNumber(scaled);
   return `${quantity} ${safeText(item.jednotka)} ${safeText(item.nazev)}`.trim();
+}
+
+function collectShoppingItems(recipe, multiplier) {
+  const sections = getRecipeSections(recipe);
+  const aggregated = new Map();
+
+  sections.forEach((section) => {
+    getSectionIngredients(section).forEach((ingredient) => {
+      const name = safeText(ingredient.nazev || ingredient.name);
+      if (!name) {
+        return;
+      }
+
+      const unit = safeText(ingredient.jednotka || ingredient.unit);
+      const rawAmount = safeText(ingredient.mnozstvi || ingredient.amount);
+      const parsed = parseNumberLike(rawAmount);
+      const key = `${normalizeText(name)}|${normalizeText(unit)}`;
+
+      if (!aggregated.has(key)) {
+        aggregated.set(key, {
+          key,
+          name,
+          unit,
+          scaledAmount: 0,
+          hasNumeric: false,
+          rawAmounts: []
+        });
+      }
+
+      const bucket = aggregated.get(key);
+      if (parsed !== null) {
+        bucket.scaledAmount += parsed * multiplier;
+        bucket.hasNumeric = true;
+      } else if (rawAmount) {
+        bucket.rawAmounts.push(multiplier === 1 ? rawAmount : `${rawAmount} × ${formatNumber(multiplier)}`);
+      }
+    });
+  });
+
+  return Array.from(aggregated.values()).map((item) => {
+    let amountText = '';
+    if (item.hasNumeric) {
+      amountText = formatNumber(item.scaledAmount);
+    } else if (item.rawAmounts.length) {
+      amountText = item.rawAmounts.join(' + ');
+    }
+
+    return {
+      key: item.key,
+      text: `${amountText} ${item.unit} ${item.name}`.replace(/\s+/g, ' ').trim()
+    };
+  }).sort((a, b) => a.text.localeCompare(b.text, 'cs'));
 }
 
 async function fetchJsonWithFallback(url) {
@@ -216,9 +324,11 @@ function renderList() {
   const query = normalizeText(dom.searchInput.value);
   const filtered = state.recipes.filter((recipe) => {
     const titleMatch = normalizeText(recipe.nazev).includes(query);
-    const ingredientsMatch = getRecipeIngredients(recipe).some((ingredient) => {
-      const text = `${ingredient.nazev || ''} ${ingredient.jednotka || ''} ${ingredient.mnozstvi || ''}`;
-      return normalizeText(text).includes(query);
+    const ingredientsMatch = getRecipeSections(recipe).some((section) => {
+      return getSectionIngredients(section).some((ingredient) => {
+        const text = `${ingredient.nazev || ''} ${ingredient.jednotka || ''} ${ingredient.mnozstvi || ''}`;
+        return normalizeText(text).includes(query);
+      });
     });
     return !query || titleMatch || ingredientsMatch;
   });
@@ -369,102 +479,211 @@ function showDetailPage(recipeSlug) {
   portionBar.append(minusButton, value, plusButton);
   portionRow.append(portionTitle, portionBar);
 
-  const ingredientsSection = document.createElement('div');
-  ingredientsSection.className = 'detail-section';
-  const ingredientsTitle = document.createElement('h3');
-  ingredientsTitle.className = 'section-title';
-  ingredientsTitle.textContent = 'Ingredience';
-
-  const ingredientList = document.createElement('ul');
-  ingredientList.className = 'list-box';
-
-  getRecipeIngredients(recipe).forEach((ingredient, index) => {
-    const item = document.createElement('li');
-    item.className = 'check-item';
-    if (getIngredientState(recipeSlug, index)) {
-      item.classList.add('done');
-    }
-
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'check-toggle';
-    toggle.setAttribute('aria-label', 'Označit ingredienci');
-    if (getIngredientState(recipeSlug, index)) {
-      toggle.classList.add('checked');
-    }
-    toggle.addEventListener('click', () => {
-      const nextValue = !getIngredientState(recipeSlug, index);
-      setIngredientState(recipeSlug, index, nextValue);
-      renderDetailForCurrentRecipe();
-    });
-
-    const text = document.createElement('span');
-    text.className = 'ingredient-text';
-    text.textContent = getScaledIngredientText(ingredient, scale);
-
-    item.append(toggle, text);
-    ingredientList.appendChild(item);
+  const shoppingSection = document.createElement('div');
+  shoppingSection.className = 'detail-section';
+  const shoppingHeader = document.createElement('div');
+  shoppingHeader.className = 'shopping-header';
+  const shoppingTitle = document.createElement('h3');
+  shoppingTitle.className = 'section-title';
+  shoppingTitle.textContent = 'Nákupní seznam';
+  const shoppingToggleButton = document.createElement('button');
+  shoppingToggleButton.type = 'button';
+  shoppingToggleButton.className = 'secondary-button';
+  const expanded = Boolean(state.shoppingExpanded[recipeSlug]);
+  shoppingToggleButton.textContent = expanded ? 'Skrýt nákupní seznam' : 'Zobrazit nákupní seznam';
+  shoppingToggleButton.addEventListener('click', () => {
+    state.shoppingExpanded[recipeSlug] = !expanded;
+    renderDetailForCurrentRecipe();
   });
+  shoppingHeader.append(shoppingTitle, shoppingToggleButton);
+  shoppingSection.appendChild(shoppingHeader);
 
-  ingredientsSection.append(ingredientsTitle, ingredientList);
+  if (expanded) {
+    const shoppingList = document.createElement('ul');
+    shoppingList.className = 'list-box';
+    const shoppingItems = collectShoppingItems(recipe, scale);
 
-  const stepsSection = document.createElement('div');
-  stepsSection.className = 'detail-section';
-  const stepsTitle = document.createElement('h3');
-  stepsTitle.className = 'section-title';
-  stepsTitle.textContent = 'Postup';
+    if (!shoppingItems.length) {
+      const emptyShopping = document.createElement('p');
+      emptyShopping.className = 'muted-text';
+      emptyShopping.textContent = 'Žádné suroviny k nákupu.';
+      shoppingSection.appendChild(emptyShopping);
+    } else {
+      shoppingItems.forEach((item) => {
+        const row = document.createElement('li');
+        row.className = 'check-item';
+        if (getShoppingState(recipeSlug, item.key)) {
+          row.classList.add('done');
+        }
 
-  const stepsList = document.createElement('div');
-  stepsList.className = 'list-box';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'check-toggle';
+        toggle.setAttribute('aria-label', 'Označit položku nákupu');
+        if (getShoppingState(recipeSlug, item.key)) {
+          toggle.classList.add('checked');
+        }
+        toggle.addEventListener('click', () => {
+          const next = !getShoppingState(recipeSlug, item.key);
+          setShoppingState(recipeSlug, item.key, next);
+          renderDetailForCurrentRecipe();
+        });
 
-  getRecipeSteps(recipe).forEach((step, index) => {
-    const card = document.createElement('div');
-    card.className = 'step-item';
-    if (getStepState(recipeSlug, index)) {
-      card.classList.add('done');
-    }
+        const text = document.createElement('span');
+        text.className = 'ingredient-text';
+        text.textContent = item.text;
 
-    const row = document.createElement('div');
-    row.className = 'step-header';
-
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'check-toggle';
-    if (getStepState(recipeSlug, index)) {
-      toggle.classList.add('checked');
-    }
-    toggle.addEventListener('click', () => {
-      const nextValue = !getStepState(recipeSlug, index);
-      setStepState(recipeSlug, index, nextValue);
-      renderDetailForCurrentRecipe();
-    });
-
-    const text = document.createElement('span');
-    text.className = 'step-text';
-    text.textContent = `${index + 1}. ${step.text || 'Krok bez textu'}`;
-
-    row.append(toggle, text);
-
-    const actions = document.createElement('div');
-    actions.className = 'step-actions';
-
-    const timerMinutes = Number(step.casovac_min);
-    if (Number.isFinite(timerMinutes) && timerMinutes > 0) {
-      const timerButton = document.createElement('button');
-      timerButton.type = 'button';
-      timerButton.className = 'primary-button';
-      timerButton.textContent = `Spustit časovač (${timerMinutes} min)`;
-      timerButton.addEventListener('click', () => {
-        startTimer(recipeSlug, index, timerMinutes, `Krok ${index + 1}: ${safeText(step.text).slice(0, 42) || 'Časovač'}`);
+        row.append(toggle, text);
+        shoppingList.appendChild(row);
       });
-      actions.appendChild(timerButton);
+      shoppingSection.appendChild(shoppingList);
+    }
+  }
+
+  const sectionsContainer = document.createElement('div');
+  sectionsContainer.className = 'detail-section';
+  const sectionsTitle = document.createElement('h3');
+  sectionsTitle.className = 'section-title';
+  sectionsTitle.textContent = 'Části receptu';
+  sectionsContainer.appendChild(sectionsTitle);
+
+  const sections = getRecipeSections(recipe);
+  let globalIngredientIndex = 0;
+  let globalStepIndex = 0;
+
+  sections.forEach((section, sectionIndex) => {
+    const sectionCard = document.createElement('section');
+    sectionCard.className = 'section-card';
+
+    const sectionHeader = document.createElement('div');
+    sectionHeader.className = 'section-card-header';
+    const sectionName = document.createElement('h4');
+    sectionName.className = 'section-card-title';
+    sectionName.textContent = safeText(section.nazev) || `Část ${sectionIndex + 1}`;
+    sectionHeader.appendChild(sectionName);
+    if (safeText(section.cas)) {
+      const sectionTime = document.createElement('span');
+      sectionTime.className = 'meta-pill';
+      sectionTime.textContent = `Čas: ${section.cas}`;
+      sectionHeader.appendChild(sectionTime);
+    }
+    sectionCard.appendChild(sectionHeader);
+
+    const ingredientsTitle = document.createElement('h5');
+    ingredientsTitle.className = 'section-subtitle';
+    ingredientsTitle.textContent = 'Suroviny';
+    sectionCard.appendChild(ingredientsTitle);
+
+    const ingredientList = document.createElement('ul');
+    ingredientList.className = 'list-box';
+    const sectionIngredients = getSectionIngredients(section);
+    if (!sectionIngredients.length) {
+      const emptyIngredients = document.createElement('li');
+      emptyIngredients.className = 'check-item muted-text';
+      emptyIngredients.textContent = 'Bez surovin';
+      ingredientList.appendChild(emptyIngredients);
+    } else {
+      sectionIngredients.forEach((ingredient) => {
+        const ingredientKey = `s${sectionIndex}-i${globalIngredientIndex}`;
+        const item = document.createElement('li');
+        item.className = 'check-item';
+        if (getIngredientState(recipeSlug, ingredientKey)) {
+          item.classList.add('done');
+        }
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'check-toggle';
+        toggle.setAttribute('aria-label', 'Označit ingredienci');
+        if (getIngredientState(recipeSlug, ingredientKey)) {
+          toggle.classList.add('checked');
+        }
+        toggle.addEventListener('click', () => {
+          const nextValue = !getIngredientState(recipeSlug, ingredientKey);
+          setIngredientState(recipeSlug, ingredientKey, nextValue);
+          renderDetailForCurrentRecipe();
+        });
+
+        const text = document.createElement('span');
+        text.className = 'ingredient-text';
+        text.textContent = getScaledIngredientText(ingredient, scale);
+
+        item.append(toggle, text);
+        ingredientList.appendChild(item);
+        globalIngredientIndex += 1;
+      });
+    }
+    sectionCard.appendChild(ingredientList);
+
+    const stepsTitle = document.createElement('h5');
+    stepsTitle.className = 'section-subtitle';
+    stepsTitle.textContent = 'Postup';
+    sectionCard.appendChild(stepsTitle);
+
+    const stepsList = document.createElement('div');
+    stepsList.className = 'list-box';
+    const sectionSteps = getSectionSteps(section);
+
+    if (!sectionSteps.length) {
+      const emptySteps = document.createElement('div');
+      emptySteps.className = 'step-item muted-text';
+      emptySteps.textContent = 'Bez postupu';
+      stepsList.appendChild(emptySteps);
+    } else {
+      sectionSteps.forEach((step, index) => {
+        const stepKey = `s${sectionIndex}-k${globalStepIndex}`;
+        const card = document.createElement('div');
+        card.className = 'step-item';
+        if (getStepState(recipeSlug, stepKey)) {
+          card.classList.add('done');
+        }
+
+        const row = document.createElement('div');
+        row.className = 'step-header';
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'check-toggle';
+        if (getStepState(recipeSlug, stepKey)) {
+          toggle.classList.add('checked');
+        }
+        toggle.addEventListener('click', () => {
+          const nextValue = !getStepState(recipeSlug, stepKey);
+          setStepState(recipeSlug, stepKey, nextValue);
+          renderDetailForCurrentRecipe();
+        });
+
+        const text = document.createElement('span');
+        text.className = 'step-text';
+        text.textContent = `${index + 1}. ${step.text || 'Krok bez textu'}`;
+
+        row.append(toggle, text);
+
+        const actions = document.createElement('div');
+        actions.className = 'step-actions';
+
+        const timerMinutes = Number(step.casovac_min);
+        if (Number.isFinite(timerMinutes) && timerMinutes > 0) {
+          const stepTimerIndex = globalStepIndex;
+          const timerButton = document.createElement('button');
+          timerButton.type = 'button';
+          timerButton.className = 'primary-button';
+          timerButton.textContent = `Spustit časovač (${timerMinutes} min)`;
+          timerButton.addEventListener('click', () => {
+            startTimer(recipeSlug, stepTimerIndex, timerMinutes, `${safeText(section.nazev) || `Část ${sectionIndex + 1}`} • krok ${index + 1}`);
+          });
+          actions.appendChild(timerButton);
+        }
+
+        card.append(row, actions);
+        stepsList.appendChild(card);
+        globalStepIndex += 1;
+      });
     }
 
-    card.append(row, actions);
-    stepsList.appendChild(card);
+    sectionCard.appendChild(stepsList);
+    sectionsContainer.appendChild(sectionCard);
   });
-
-  stepsSection.append(stepsTitle, stepsList);
 
   const tipSection = document.createElement('div');
   tipSection.className = 'detail-section';
@@ -478,7 +697,7 @@ function showDetailPage(recipeSlug) {
     tipSection.append(tipTitle, tipBox);
   }
 
-  content.append(title, metaRow, portionRow, ingredientsSection, stepsSection, tipSection);
+  content.append(title, metaRow, portionRow, shoppingSection, sectionsContainer, tipSection);
   detail.append(header, content);
 }
 
@@ -816,6 +1035,7 @@ function bindEvents() {
 async function initApp() {
   state.checkedIngredients = readJsonStorage(STORAGE_KEYS.CHECKED_INGREDIENTS, {});
   state.checkedSteps = readJsonStorage(STORAGE_KEYS.CHECKED_STEPS, {});
+  state.checkedShopping = readJsonStorage(STORAGE_KEYS.CHECKED_SHOPPING, {});
   state.portionScale = readJsonStorage(STORAGE_KEYS.PORTIONS, {});
   state.timers = readJsonStorage(STORAGE_KEYS.TIMERS, []);
 
