@@ -1,0 +1,507 @@
+{
+  "slug": "kureci-tikka-masala",
+  "nazev": "Kuřecí Tikka Masala",
+  "cas": "2 až 12 hodin",
+  "porce": "4",
+  "obtiznost": "střední",
+  "foto": "",
+  "ingredience": [
+    {
+      "mnozstvi": "500",
+      "jednotka": "g",
+      "nazev": "kuřecích prsou"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "",
+      "nazev": "kelímek bílého jogurtu"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "nastrouhaného zázvoru"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "prolisovaného česneku"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžička",
+      "nazev": "římského mletého kmínu"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "koření tandoori masala"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "sůl"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "lžíce",
+      "nazev": "oleje (ne olivový)"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "",
+      "nazev": "velká cibule"
+    },
+    {
+      "mnozstvi": "2",
+      "jednotka": "",
+      "nazev": "rajčata"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "nastrouhaného zázvoru"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "prolisovaného česneku"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžička",
+      "nazev": "kurkumy"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžička",
+      "nazev": "římského mletého kmínu"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžička",
+      "nazev": "indického kari"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "",
+      "nazev": "kousek celé skořice"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "",
+      "nazev": "kardamon"
+    },
+    {
+      "mnozstvi": "2",
+      "jednotka": "",
+      "nazev": "hvězdičky badyánu"
+    },
+    {
+      "mnozstvi": "4",
+      "jednotka": "",
+      "nazev": "bobkové listy"
+    },
+    {
+      "mnozstvi": "150",
+      "jednotka": "ml",
+      "nazev": "smetany ke šlehání (31%)"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "",
+      "nazev": "plechovka krájených rajčat"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "hrst čerstvého koriandru"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "sůl, cukr"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "(čerstvá chilli paprička)"
+    },
+    {
+      "mnozstvi": "250",
+      "jednotka": "g",
+      "nazev": "hladké mouky"
+    },
+    {
+      "mnozstvi": "1/2",
+      "jednotka": "",
+      "nazev": "lžičky kypřícího prášku"
+    },
+    {
+      "mnozstvi": "100",
+      "jednotka": "ml",
+      "nazev": "smetany na vaření (12%)"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "voda"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "sůl"
+    },
+    {
+      "mnozstvi": "",
+      "jednotka": "",
+      "nazev": "černá sezamová semínka"
+    },
+    {
+      "mnozstvi": "1",
+      "jednotka": "lžíce",
+      "nazev": "másla"
+    }
+  ],
+  "postup": [
+    {
+      "text": "Maso nakrájet na kostky cca 4×4 cm",
+      "casovac_min": null
+    },
+    {
+      "text": "Smíchat všechny ingredience s jogurtem v míse",
+      "casovac_min": null
+    },
+    {
+      "text": "Do směsi naložit maso a nechat marinovat zabalené ve folii",
+      "casovac_min": null
+    },
+    {
+      "text": "Po marinování naskládat na plech vyložený pečícím papírem a vložit do trouby předehřáté na 250 °C",
+      "casovac_min": null
+    },
+    {
+      "text": "Péct do měkka asi 10 minut",
+      "casovac_min": null
+    },
+    {
+      "text": "Hotové maso přidat do omáčky i se šťávou",
+      "casovac_min": null
+    },
+    {
+      "text": "Na lžíci rozpáleného oleje orestovat najemno nakrájenou cibuly (asi 5 minut)",
+      "casovac_min": null
+    },
+    {
+      "text": "K cibuly přidat zázvor, česnek, mletý římský kmín, kurkumu a indické kari",
+      "casovac_min": null
+    },
+    {
+      "text": "Nechat 2 minuty restovat",
+      "casovac_min": null
+    },
+    {
+      "text": "Přidat na kostičky nakrájená rajčata, skořici, kardamom, badyán, bobkový list, rajčata z plechovky, smetanu a sůl. Může se přidat chilli paprička",
+      "casovac_min": null
+    },
+    {
+      "text": "Nechat vařit asi 15 minut",
+      "casovac_min": null
+    },
+    {
+      "text": "Po dochucení omáčky vyndat kardamom, bobkový list, badyán a skořici",
+      "casovac_min": null
+    },
+    {
+      "text": "Do mísy nasypat mouku s kypřícím ppráškem a trochu osolit",
+      "casovac_min": null
+    },
+    {
+      "text": "Přilít smetanu",
+      "casovac_min": null
+    },
+    {
+      "text": "Po troškách přidávat vodu dokud nevznikne kompaktní těsto, nemělo by lepit, aby z něj šly vyválet placky",
+      "casovac_min": null
+    },
+    {
+      "text": "Těsto rozdělit na 5 částí a každou vyválet na tenkou placku",
+      "casovac_min": null
+    },
+    {
+      "text": "Placky dát na plech vyložený pečícím papírem, propíchat vidličkou",
+      "casovac_min": null
+    },
+    {
+      "text": "Dát do trouby na co nejvyšší teplotu a nechat péct cca 3 minuty, dokud se nenafouknou a nezhnědnou",
+      "casovac_min": null
+    }
+  ],
+  "casy": [
+    {
+      "popis": "Marinování masa",
+      "hodnota": "2 až 12 hodin"
+    },
+    {
+      "popis": "Omáčka",
+      "hodnota": "1 hodina"
+    },
+    {
+      "popis": "Chleba",
+      "hodnota": "30 minut"
+    }
+  ],
+  "casti": [
+    {
+      "nazev": "Příprava masa",
+      "cas": "2 až 12 hodin",
+      "ingredience": [
+        {
+          "mnozstvi": "500",
+          "jednotka": "g",
+          "nazev": "kuřecích prsou"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "",
+          "nazev": "kelímek bílého jogurtu"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "nastrouhaného zázvoru"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "prolisovaného česneku"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžička",
+          "nazev": "římského mletého kmínu"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "koření tandoori masala"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "sůl"
+        }
+      ],
+      "postup": [
+        {
+          "text": "Maso nakrájet na kostky cca 4×4 cm",
+          "casovac_min": null
+        },
+        {
+          "text": "Smíchat všechny ingredience s jogurtem v míse",
+          "casovac_min": null
+        },
+        {
+          "text": "Do směsi naložit maso a nechat marinovat zabalené ve folii",
+          "casovac_min": null
+        },
+        {
+          "text": "Po marinování naskládat na plech vyložený pečícím papírem a vložit do trouby předehřáté na 250 °C",
+          "casovac_min": null
+        },
+        {
+          "text": "Péct do měkka asi 10 minut",
+          "casovac_min": null
+        },
+        {
+          "text": "Hotové maso přidat do omáčky i se šťávou",
+          "casovac_min": null
+        }
+      ]
+    },
+    {
+      "nazev": "Omáčka",
+      "cas": "1 hodina",
+      "ingredience": [
+        {
+          "mnozstvi": "",
+          "jednotka": "lžíce",
+          "nazev": "oleje (ne olivový)"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "",
+          "nazev": "velká cibule"
+        },
+        {
+          "mnozstvi": "2",
+          "jednotka": "",
+          "nazev": "rajčata"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "nastrouhaného zázvoru"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "prolisovaného česneku"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžička",
+          "nazev": "kurkumy"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžička",
+          "nazev": "římského mletého kmínu"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžička",
+          "nazev": "indického kari"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "",
+          "nazev": "kousek celé skořice"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "",
+          "nazev": "kardamon"
+        },
+        {
+          "mnozstvi": "2",
+          "jednotka": "",
+          "nazev": "hvězdičky badyánu"
+        },
+        {
+          "mnozstvi": "4",
+          "jednotka": "",
+          "nazev": "bobkové listy"
+        },
+        {
+          "mnozstvi": "150",
+          "jednotka": "ml",
+          "nazev": "smetany ke šlehání (31%)"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "",
+          "nazev": "plechovka krájených rajčat"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "hrst čerstvého koriandru"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "sůl, cukr"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "(čerstvá chilli paprička)"
+        }
+      ],
+      "postup": [
+        {
+          "text": "Na lžíci rozpáleného oleje orestovat najemno nakrájenou cibuly (asi 5 minut)",
+          "casovac_min": null
+        },
+        {
+          "text": "K cibuly přidat zázvor, česnek, mletý římský kmín, kurkumu a indické kari",
+          "casovac_min": null
+        },
+        {
+          "text": "Nechat 2 minuty restovat",
+          "casovac_min": null
+        },
+        {
+          "text": "Přidat na kostičky nakrájená rajčata, skořici, kardamom, badyán, bobkový list, rajčata z plechovky, smetanu a sůl. Může se přidat chilli paprička",
+          "casovac_min": null
+        },
+        {
+          "text": "Nechat vařit asi 15 minut",
+          "casovac_min": null
+        },
+        {
+          "text": "Po dochucení omáčky vyndat kardamom, bobkový list, badyán a skořici",
+          "casovac_min": null
+        }
+      ]
+    },
+    {
+      "nazev": "Chleba",
+      "cas": "30 minut",
+      "ingredience": [
+        {
+          "mnozstvi": "250",
+          "jednotka": "g",
+          "nazev": "hladké mouky"
+        },
+        {
+          "mnozstvi": "1/2",
+          "jednotka": "",
+          "nazev": "lžičky kypřícího prášku"
+        },
+        {
+          "mnozstvi": "100",
+          "jednotka": "ml",
+          "nazev": "smetany na vaření (12%)"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "voda"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "sůl"
+        },
+        {
+          "mnozstvi": "",
+          "jednotka": "",
+          "nazev": "černá sezamová semínka"
+        },
+        {
+          "mnozstvi": "1",
+          "jednotka": "lžíce",
+          "nazev": "másla"
+        }
+      ],
+      "postup": [
+        {
+          "text": "Do mísy nasypat mouku s kypřícím ppráškem a trochu osolit",
+          "casovac_min": null
+        },
+        {
+          "text": "Přilít smetanu",
+          "casovac_min": null
+        },
+        {
+          "text": "Po troškách přidávat vodu dokud nevznikne kompaktní těsto, nemělo by lepit, aby z něj šly vyválet placky",
+          "casovac_min": null
+        },
+        {
+          "text": "Těsto rozdělit na 5 částí a každou vyválet na tenkou placku",
+          "casovac_min": null
+        },
+        {
+          "text": "Placky dát na plech vyložený pečícím papírem, propíchat vidličkou",
+          "casovac_min": null
+        },
+        {
+          "text": "Dát do trouby na co nejvyšší teplotu a nechat péct cca 3 minuty, dokud se nenafouknou a nezhnědnou",
+          "casovac_min": null
+        }
+      ]
+    }
+  ],
+  "tip": ""
+}
