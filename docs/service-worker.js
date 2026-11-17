@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'kucharka-v2';
+const CACHE_VERSION = 'kucharka-v3';
 const APP_CACHE = `kucharka-app-${CACHE_VERSION}`;
 const DATA_CACHE = `kucharka-data-${CACHE_VERSION}`;
 const APP_SHELL = [
@@ -28,6 +28,16 @@ self.addEventListener('activate', (event) => {
 function isDataRequest(request) {
   const url = new URL(request.url);
   return url.pathname.endsWith('/recepty.json') || url.pathname.includes('/obrazky/');
+}
+
+function isAppAssetRequest(request) {
+  const url = new URL(request.url);
+  return (
+    url.pathname.endsWith('/index.html') ||
+    url.pathname.endsWith('/app.js') ||
+    url.pathname.endsWith('/styles.css') ||
+    url.pathname.endsWith('/manifest.webmanifest')
+  );
 }
 
 async function networkFirst(request) {
@@ -68,8 +78,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const url = new URL(request.url);
-
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).then((response) => {
@@ -82,6 +90,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isDataRequest(request)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (isAppAssetRequest(request)) {
     event.respondWith(networkFirst(request));
     return;
   }
